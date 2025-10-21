@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypingMaster Pro - Test Your Speed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div style="position:fixed; top:10px; right:10px; color:#fff; z-index:100;">
+        <span id="userStatus">Not Logged In</span>
+        <button id="logoutBtn" style="margin-left:10px; padding:5px 10px; cursor:pointer; display:none;">Logout</button>
+    </div>
+
+    <div class="container" id="appView" style="display:none;">
+        <div class="header">
+            <h1>TypingMaster Pro</h1>
+            <p>Challenge yourself with different difficulty levels</p>
+        </div>
+
+        <div class="main-content">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn easy active" data-level="easy">
+                    Easy
+                </button>
+                <button class="difficulty-btn medium" data-level="medium">
+                    Medium
+                </button>
+                <button class="difficulty-btn hard" data-level="hard">
+                    Hard
+                </button>
+            </div>
+
+            <div class="difficulty-info" id="difficultyInfo">
+                <strong>Easy Mode:</strong> Simple words and common phrases - Perfect for beginners
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="wpmStat">0</div>
+                    <div class="stat-label">Words Per Minute</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="accuracyStat">100%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="timeStat">0s</div>
+                    <div class="stat-label">Time Elapsed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="charsStat">0</div>
+                    <div class="stat-label">Characters Typed</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="typing-area">
+                <div class="text-display" id="textDisplay">
+                    Click "Start Test" to begin your typing challenge!
+                </div>
+                <textarea
+                    class="typing-input"
+                    id="typingInput"
+                    placeholder="Start typing here..."
+                    disabled
+                ></textarea>
+            </div>
+
+            <div class="control-buttons">
+                <button class="btn btn-primary" id="startBtn">Start Test</button>
+                <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                <button class="btn btn-secondary" id="newTextBtn">New Text</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-modal" id="resultsModal">
+        <div class="modal-content" id="modalContent">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2>Test Complete!</h2>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <div class="value" id="finalWPM">0</div>
+                    <div class="label">Words Per Minute</div>
+                </div>
+                <div class="result-stat">
+                    <div class="value" id="finalAccuracy">0%</div>
+                    <div class="label">Accuracy</div>
+                </div>
+                <div class="result-stat">
+                    <div class="value" id="finalTime">0s</div>
+                    <div class="label">Total Time</div>
+                </div>
+                <div class="result-stat">
+                    <div class="value" id="finalChars">0</div>
+                    <div class="label">Characters</div>
+                </div>
+            </div>
+            <div class="performance-rating" id="performanceRating">
+                Great job! Keep practicing to improve further.
+            </div>
+            <button class="btn btn-primary" onclick="closeModal()">Try Again</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script src="firebase-config.js"></script>
+
+    <script src="script.js"></script>
+    
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'login.html'; // Redirect to login page
+            }).catch((error) => {
+                console.error("Logout Error:", error);
+                alert("Logout failed. See console.");
+            });
+        });
+        
+        // Listener for Auth state changes
+        firebase.auth().onAuthStateChanged((user) => {
+            const appView = document.getElementById('appView');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userStatus = document.getElementById('userStatus');
+
+            if (user) {
+                // User is signed in. Show app view.
+                appView.style.display = 'block';
+                logoutBtn.style.display = 'inline-block';
+                userStatus.textContent = `Welcome, ${user.email}`;
+                
+                // You can fetch and display user's best score here using user.uid
+                
+            } else {
+                // User is signed out. Redirect to login page.
+                appView.style.display = 'none';
+                logoutBtn.style.display = 'none';
+                userStatus.textContent = 'Not Logged In';
+                
+                // Only redirect if we're not already on the auth pages
+                if (window.location.pathname !== '/login.html' && window.location.pathname !== '/signup.html') {
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        // NOTE: Your TypingSpeedTest class in script.js now needs to use Firebase 
+        // to save results only when a user is logged in.
+
+        console.log('firebase defined?', !!window.firebase);
+        try { console.log('apps:', firebase.apps ? firebase.apps.length : 'n/a'); } catch(e){ console.error(e) }
+        try { console.log('app options:', firebase.app().options); } catch(e){ console.error(e) }
+
+        document.getElementById('signupForm').addEventListener('submit', function(e){
+          e.preventDefault();
+          const email = document.getElementById('signup-email').value;
+          const password = document.getElementById('signup-password').value;
+          firebase.auth().createUserWithEmailAndPassword(email,password)
+            .then(u => console.log('created', u))
+            .catch(err => { console.error('FULL SIGNUP ERROR OBJECT:', err); alert('See console for error'); });
+        });
+    </script>
+</body>
+</html>
